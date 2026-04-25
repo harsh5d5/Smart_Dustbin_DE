@@ -1,11 +1,5 @@
 # 🚛 SmartDispatch IoT
 
-### *The Future of Urban Waste Management*
-
-![Project Banner](src/assets/banner.png)
-
----
-
 ## 🌟 Overview
 **SmartDispatch** is an advanced IoT-based waste management solution designed to optimize city-wide garbage collection. By utilizing real-time ultrasonic sensing and intelligent routing algorithms, the system ensures that trucks only visit bins that actually need emptying—reducing fuel consumption, CO2 emissions, and urban traffic.
 
