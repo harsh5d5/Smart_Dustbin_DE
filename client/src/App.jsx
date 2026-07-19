@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Trash2, 
   AlertTriangle, 
@@ -37,22 +37,31 @@ const fillRateData = [
   { name: 'CG Road', rate: 92 },
 ];
 
+const API_URL = 'http://localhost:3001/api';
+
 function App() {
+  const [showLanding, setShowLanding] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isDispatching, setIsDispatching] = useState(false);
   const [truckPosition, setTruckPosition] = useState(null);
 
-  // --- MOCK DATA (Simulating Arduino Sensors) ---
-  const [bins, setBins] = useState([
-    { id: 1, name: "Bin 01 - LD College", isActive: true, fillPercentage: 29, ultrasonicSensor: "connected", lidStatus: "closed", depth: 30, lat: 23.0350, lng: 72.5464 },
-    { id: 2, name: "Bin 02 - Law Garden", isActive: true, fillPercentage: 85, ultrasonicSensor: "connected", lidStatus: "open", depth: 45, lat: 23.0249, lng: 72.5604 },
-    { id: 3, name: "Bin 03 - Riverfront", isActive: true, fillPercentage: 95, ultrasonicSensor: "connected", lidStatus: "closed", depth: 30, lat: 23.0210, lng: 72.5714 },
-    { id: 4, name: "Bin 04 - Paldi", isActive: false, fillPercentage: 10, ultrasonicSensor: "error", lidStatus: "closed", depth: 30, lat: 23.0115, lng: 72.5550 },
-    { id: 5, name: "Bin 05 - Gujarat College", isActive: true, fillPercentage: 75, ultrasonicSensor: "connected", lidStatus: "closed", depth: 40, lat: 23.0215, lng: 72.5570 },
-    { id: 6, name: "Bin 06 - CG Road", isActive: true, fillPercentage: 92, ultrasonicSensor: "connected", lidStatus: "open", depth: 35, lat: 23.0320, lng: 72.5560 },
-    { id: 7, name: "Bin 07 - Ashram Road", isActive: true, fillPercentage: 40, ultrasonicSensor: "connected", lidStatus: "closed", depth: 30, lat: 23.0300, lng: 72.5700 },
-    { id: 8, name: "Bin 08 - Navrangpura", isActive: true, fillPercentage: 15, ultrasonicSensor: "connected", lidStatus: "closed", depth: 40, lat: 23.0380, lng: 72.5510 }
-  ]);
+  // --- BIN DATA FROM POSTGRESQL ---
+  const [bins, setBins] = useState([]);
+
+  // Fetch bins from the backend on mount
+  const fetchBins = async () => {
+    try {
+      const res = await fetch(`${API_URL}/bins`);
+      const data = await res.json();
+      setBins(data);
+    } catch (err) {
+      console.error('Failed to fetch bins:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchBins();
+  }, []);
 
   // Calculate dynamic stats based on our mock data
   const totalBins = bins.length;
@@ -68,11 +77,18 @@ function App() {
     return 'fill-green';
   };
 
-  // Handle Empty Bin action (simulates truck picking up trash)
-  const handleEmptyBin = (id) => {
+  // Handle Empty Bin action — persists to PostgreSQL
+  const handleEmptyBin = async (id) => {
+    // Optimistic UI update
     setBins(bins.map(bin => 
       bin.id === id ? { ...bin, fillPercentage: 5, lidStatus: 'closed' } : bin
     ));
+    try {
+      await fetch(`${API_URL}/bins/${id}/empty`, { method: 'POST' });
+    } catch (err) {
+      console.error('Failed to empty bin:', err);
+      fetchBins(); // Re-fetch on error
+    }
   };
 
   // Handle Master Dispatch with Live Truck Animation
@@ -100,10 +116,10 @@ function App() {
         // Reached the end of the route
         clearInterval(driveInterval);
         
-        // Clear bins and hide truck
-        setBins(prevBins => prevBins.map(bin => 
-          bin.fillPercentage >= 70 ? { ...bin, fillPercentage: 5, lidStatus: 'closed', ultrasonicSensor: 'connected' } : bin
-        ));
+        // Persist dispatch to PostgreSQL, then refresh UI
+        fetch(`${API_URL}/bins/dispatch`, { method: 'POST' })
+          .then(() => fetchBins())
+          .catch(err => console.error('Dispatch failed:', err));
         setTruckPosition(null);
         setIsDispatching(false);
       }
@@ -142,6 +158,73 @@ function App() {
       iconAnchor: [70, 20], 
     });
   };
+
+  // ========== LANDING PAGE ==========
+  if (showLanding) {
+    return (
+      <div className="landing-page">
+        {/* Animated background particles */}
+        <div className="landing-bg">
+          <div className="particle p1"></div>
+          <div className="particle p2"></div>
+          <div className="particle p3"></div>
+          <div className="particle p4"></div>
+          <div className="particle p5"></div>
+          <div className="particle p6"></div>
+          <div className="particle p7"></div>
+          <div className="particle p8"></div>
+          <div className="mesh-gradient"></div>
+        </div>
+
+        {/* Main content */}
+        <div className="landing-content">
+          {/* Floating icon badge */}
+          <div className="landing-icon-badge land-anim-1">
+            <Trash2 size={36} />
+          </div>
+
+          {/* Title */}
+          <h1 className="landing-title land-anim-2">
+            Smart<span className="title-highlight">Dispatch</span>
+          </h1>
+
+          {/* Subtitle with typing feel */}
+          <p className="landing-subtitle land-anim-3">
+            IoT-Powered Waste Management & Dynamic Routing
+          </p>
+
+          {/* Glowing divider */}
+          <div className="landing-divider land-anim-4"></div>
+
+          {/* Feature pills */}
+          <div className="landing-features land-anim-5">
+            <div className="feature-pill">
+              <Activity size={16} /> Real-time Monitoring
+            </div>
+            <div className="feature-pill">
+              <Truck size={16} /> Smart Routing
+            </div>
+            <div className="feature-pill">
+              <Leaf size={16} /> Eco Analytics
+            </div>
+          </div>
+
+          {/* CTA Button */}
+          <button className="landing-cta land-anim-6" onClick={() => setShowLanding(false)}>
+            <span>Launch Dashboard</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+            </svg>
+          </button>
+
+          {/* Footer tag */}
+          <p className="landing-footer land-anim-7">
+            SEM 6 • Design Engineering Project • 2026
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-container">
