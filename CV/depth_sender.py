@@ -19,7 +19,7 @@ def main():
             
         h, w = depth_image.shape
         
-        
+        # for the normalization
         depth_float = 1.0 - (depth_image.astype(np.float32) / 255.0)
         
        
