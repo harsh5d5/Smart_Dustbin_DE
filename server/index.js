@@ -88,6 +88,9 @@ app.post('/api/bins/:id/empty', async (req, res) => {
   }
 });
 
+// In-memory cache for 3D depth meshes of each bin
+const meshCache = {};
+
 // ──────────────────────────────────────────
 // POST /api/bins/dispatch — Empty all bins >= 70%
 // ──────────────────────────────────────────
@@ -100,11 +103,97 @@ app.post('/api/bins/dispatch', async (req, res) => {
        RETURNING *`
     );
 
+    // Clear mesh cache for emptied bins
+    rows.forEach(row => {
+      delete meshCache[row.id];
+    });
+
     res.json({ message: `Dispatched and emptied ${rows.length} bins`, count: rows.length });
   } catch (err) {
     console.error('Error dispatching:', err);
     res.status(500).json({ error: 'Failed to dispatch' });
   }
+});
+
+// ──────────────────────────────────────────
+// GET /api/bins/:id/mesh — Fetch 3D depth mesh coordinates
+// ──────────────────────────────────────────
+app.get('/api/bins/:id/mesh', (req, res) => {
+  const { id } = req.params;
+  if (meshCache[id]) {
+    res.json(meshCache[id]);
+  } else {
+    res.json(null);
+  }
+});
+
+// ──────────────────────────────────────────
+// POST /api/bins/:id/mesh — Update 3D depth mesh coordinates
+// ──────────────────────────────────────────
+app.post('/api/bins/:id/mesh', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { x, y, z, fillPercentage, averageHeight, maxHeight } = req.body;
+
+    // Cache the coordinates and physical depth metrics
+    meshCache[id] = { 
+      x, 
+      y, 
+      z, 
+      averageHeight: averageHeight || 0, 
+      maxHeight: maxHeight || 0 
+    };
+
+    // Update fill percentage in database if provided
+    if (fillPercentage !== undefined) {
+      await pool.query(
+        'UPDATE bins SET fill_percentage = $1 WHERE id = $2',
+        [Math.round(fillPercentage), id]
+      );
+    }
+
+    res.json({ message: 'Mesh coordinates updated successfully', fillPercentage });
+  } catch (err) {
+    console.error('Error updating mesh:', err);
+    res.status(500).json({ error: 'Failed to update mesh coordinates' });
+  }
+});
+
+// Alerts in-memory cache
+let alerts = [];
+
+// ──────────────────────────────────────────
+// GET /api/alerts — Fetch all active safety alerts
+// ──────────────────────────────────────────
+app.get('/api/alerts', (req, res) => {
+  res.json(alerts);
+});
+
+// ──────────────────────────────────────────
+// POST /api/alerts — Insert a new safety alert (e.g. fire, smoke)
+// ──────────────────────────────────────────
+app.post('/api/alerts', (req, res) => {
+  const { type, message, binId } = req.body;
+  const newAlert = {
+    id: Date.now(),
+    type, // 'fire' | 'smoke'
+    message,
+    binId: binId || 1,
+    timestamp: new Date().toLocaleTimeString()
+  };
+  alerts.unshift(newAlert);
+  if (alerts.length > 20) {
+    alerts = alerts.slice(0, 20);
+  }
+  res.json({ message: 'Alert registered successfully', alert: newAlert });
+});
+
+// ──────────────────────────────────────────
+// DELETE /api/alerts — Clear all safety alerts
+// ──────────────────────────────────────────
+app.delete('/api/alerts', (req, res) => {
+  alerts = [];
+  res.json({ message: 'Alerts logs cleared' });
 });
 
 // ──────────────────────────────────────────
