@@ -997,3 +997,179 @@ h6 {
   .landing-features { flex-direction: column; align-items: center; }
   .landing-cta { padding: 0.85rem 2rem; font-size: 1rem; }
 }
+
+/* ============================================
+   CLICK-TO-PREVIEW & MODAL STYLES
+   ============================================ */
+
+.mesh-preview-card {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(2, 12, 27, 0.8), rgba(6, 78, 59, 0.4));
+  border: 1px dashed rgba(16, 185, 129, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: 0.5rem;
+}
+
+.mesh-preview-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-green);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+  background: linear-gradient(135deg, rgba(2, 12, 27, 0.9), rgba(6, 78, 59, 0.5));
+}
+
+.mesh-preview-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 50% 50%, rgba(52, 211, 153, 0.12), transparent 60%);
+  z-index: 1;
+}
+
+.preview-overlay {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: #a7f3d0;
+  transition: transform 0.3s ease;
+}
+
+.mesh-preview-card:hover .preview-overlay {
+  transform: scale(1.05);
+}
+
+.preview-eye-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1.5px dashed rgba(16, 185, 129, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #34d399;
+  transition: all 0.3s ease;
+}
+
+.mesh-preview-card:hover .preview-eye-icon {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1.5px solid #34d399;
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.4);
+}
+
+.preview-text {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #6ee7b7;
+  text-transform: uppercase;
+}
+
+/* --- Modal Backdrop --- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 12, 27, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+/* --- Modal Window (Grounded OS aesthetic) --- */
+.modal-window {
+  width: 100%;
+  max-width: 880px;
+  background: #020c1b;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5), 0 0 32px rgba(16, 185, 129, 0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.animate-scale-up {
+  animation: scaleUpReveal 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes scaleUpReveal {
+  from { opacity: 0; transform: scale(0.92) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* --- Modal Header top-bar --- */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.modal-dots {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.modal-dots .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-red { background: #ef4444; }
+.dot-yellow { background: #fbbf24; }
+.dot-green { background: #10b981; }
+
+.modal-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: monospace;
+  letter-spacing: 0.02em;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.modal-close:hover {
+  color: #ef4444;
+}
+
+.modal-body {
+  padding: 1.25rem;
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.25); border-color: rgba(239, 68, 68, 0.6); }
+  100% { box-shadow: 0 0 24px rgba(239, 68, 68, 0.55); border-color: rgba(239, 68, 68, 1); }
+}
